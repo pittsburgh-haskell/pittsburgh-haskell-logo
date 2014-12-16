@@ -2,7 +2,15 @@
 
 -- Original code from https://www.haskell.org/haskellwiki/TW-Logo-Haskell
 
+import System.Environment (getArgs)
+import System.Process (callProcess)
 import Control.Monad (forM)
+
+-- Precise Steelers colors.
+-- http://moncpc.files.wordpress.com/2010/02/nationalfootballleague_frc_2000_sol_srgb.pdf
+steelCityBlack = RGB (17/255) (28/255) (36/255)
+steelCityGold = RGB (255/255) (182/255) (18/255)
+steelCity opt = opt { color1 = steelCityBlack, color2 = steelCityGold }
 
 ----------------------------------------------
 -- VARIATIONS
@@ -21,7 +29,20 @@ variations = [ ( "normal-partround-lambda-col1", sizes, col1 opt0 ),
                ( "outline-normal-partrounded",   sizes, partRounded $ outline opt0 ),
                ( "outline-skinny-partrounded",   sizes, partRounded $ outline opt2 ) ]
 
+-- Generate a single Pittsburgh Haskell SVG and a PNG of a particular size.
+main :: IO ()
 main = do
+  [description, sizeString] <- getArgs
+  let sizex = read sizeString
+  let size = (sizex, sizex)
+  let fileBase = description ++ "-" ++ show (round sizex)
+  let svgFileName = fileBase ++ ".svg"
+  let pngFileName = fileBase ++ ".png"
+  writeFile svgFileName $ svgShapes size $ steelCity opt0
+  callProcess "svg2png" [svgFileName, pngFileName]
+
+-- Old main
+main' = do
    let flatVars = flattened variations
    forM flatVars $ \ (fname, size, opt, _) -> do
       let svgStr = svgShapes size opt
